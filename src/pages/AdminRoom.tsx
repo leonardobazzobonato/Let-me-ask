@@ -1,21 +1,41 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import logoImg from "../assets/images/logo.svg";
 import { Button } from "../components/Button";
 import { Question } from "../components/Question";
 import { RoomCode } from "../components/RoomCode";
 import { useRoom } from "../hooks/useRoom";
 
+import deleteImg from "../assets/images/delete.svg";
+
 import "../styles/room.scss";
+import { database } from "../services/firebase";
 
 type RoomParams = {
   id: string;
 };
 
 export function AdminRoom() {
+  const history = useNavigate();
   const params = useParams<RoomParams>();
   const roomId = params.id ? params.id : "";
 
   const { title, questions } = useRoom(roomId);
+
+  async function handleEndRoom() {
+    if (window.confirm("Tem certeza que você deseja excluir esta sala?")) {
+      database.ref(`rooms/${roomId}`).update({
+        closedAt: new Date(),
+      });
+
+      history("/");
+    }
+  }
+
+  async function handleDeleteQuestion(questionId: string) {
+    if (window.confirm("Tem certeza que você deseja excluir esta pergunta?")) {
+      await database.ref(`rooms/${roomId}/questions/${questionId}`).remove();
+    }
+  }
 
   return (
     <div id="page-room">
@@ -24,7 +44,9 @@ export function AdminRoom() {
           <img src={logoImg} alt="" />
           <div>
             <RoomCode code={`${params.id}`} />
-            <Button isOutlined>Encerrar sala</Button>
+            <Button isOutlined onClick={handleEndRoom}>
+              Encerrar sala
+            </Button>
           </div>
         </div>
       </header>
@@ -42,7 +64,14 @@ export function AdminRoom() {
                 key={question.id}
                 content={question.content}
                 author={question.author}
-              />
+              >
+                <button
+                  type="button"
+                  onClick={() => handleDeleteQuestion(question.id)}
+                >
+                  <img src={deleteImg} alt="" />
+                </button>
+              </Question>
             );
           })}
         </div>
