@@ -1,1 +1,1 @@
-Project developed in React.js with Rockeatseat
+Project developed in React.js and Firebase with Rockeatseat
